@@ -11,8 +11,7 @@
      [Notes on implementation]
  */
 //
-// Original Author:  Ali Fahim,22 R-013,+41227672649,
-//         Created:  Wed Mar 23 11:42:34 CET 2011
+// Modified/updated  by Ali Fahim in 2011
 //
 //
 
@@ -346,7 +345,7 @@ void HcalDigisValidation::booking(DQMStore::IBooker& ib, const std::string bsubd
       }
 
       //...TDC
-      if (bsubdet == "HB" || bsubdet == "HE") {
+      if (bsubdet == "HB" || bsubdet == "HE" || bsubdet == "HF") {
         sprintf(histo, "HcalDigiTask_TDCtime_%s", sub);
         book1D(ib, histo, tdcLim);
 
@@ -1148,7 +1147,20 @@ void HcalDigisValidation::reco(const edm::Event& iEvent,
           double digiADC = (dataFrame)[ii].adc();
           const QIE11DataFrame dataFrameHBHE = static_cast<const QIE11DataFrame>(*digiItr);
           double digiTDC = (dataFrameHBHE)[ii].tdc();
-          if (digiTDC < 50) {
+          if (digiTDC < 50.) {
+            double time = ii * 25. + (digiTDC * 0.5);
+            strtmp = "HcalDigiTask_TDCtime_" + subdet_;
+            fill1D(strtmp, time);
+
+            strtmp = "HcalDigiTask_TDCtime_vs_ADC_" + subdet_;
+            fill2D(strtmp, digiADC, time);
+          }
+        }
+        if (HEPhase1_ && sub == 4) {  // HF filled for >= 2018...
+          double digiADC = (dataFrame)[ii].adc();
+          const QIE10DataFrame dataFrameHF = static_cast<const QIE10DataFrame>(*digiItr);
+          double digiTDC = (dataFrameHF)[ii].le_tdc();
+          if (digiTDC < 50.) {
             double time = ii * 25. + (digiTDC * 0.5);
             strtmp = "HcalDigiTask_TDCtime_" + subdet_;
             fill1D(strtmp, time);
