@@ -1157,8 +1157,8 @@ void HcalDigisValidation::reco(const edm::Event& iEvent,
           }
         }
         if (HEPhase1_ && sub == 4) {  // HF filled for >= 2018...
-          double digiADC = (dataFrame)[ii].adc();
           const QIE10DataFrame dataFrameHF = static_cast<const QIE10DataFrame>(*digiItr);
+          double digiADC = (dataFrameHF)[ii].adc();
           double digiTDC = (dataFrameHF)[ii].le_tdc();
           if (digiTDC < 50.) {
             double time = ii * 25. + (digiTDC * 0.5);
