@@ -1144,8 +1144,8 @@ void HcalDigisValidation::reco(const edm::Event& iEvent,
         //...TDC
 
         if ((HBPhase1_ && sub == 1) || (HEPhase1_ && sub == 2)) {
-          double digiADC = (dataFrame)[ii].adc();
           const QIE11DataFrame dataFrameHBHE = static_cast<const QIE11DataFrame>(*digiItr);
+          double digiADC = (dataFrameHBHE)[ii].adc();
           double digiTDC = (dataFrameHBHE)[ii].tdc();
           if (digiTDC < 50.) {
             double time = ii * 25. + (digiTDC * 0.5);
