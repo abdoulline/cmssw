@@ -172,7 +172,7 @@ HFShowerLibrary::HFShowerLibrary(const Params& iParams, const FileParams& iFileP
   }
   emBranch_ = BranchReader(emBranch, fileFormat, 0, iFileParams.cacheBranches_ ? totEvents_ : 0);
   size_t offset = 0;
-  if (fileFormat == FileFormat::kNewV3 or (fileFormat == FileFormat::kNew and fileVersion < 2)) {
+  if (fileFormat == FileFormat::kNewV3 or (fileFormat == FileFormat::kNew and fileVersion < 1)) {
     //NOTE: for this format, the hadBranch is all empty up to
     // totEvents_ (which is more like 1/2*GenEntries())
     offset = totEvents_;
@@ -561,7 +561,7 @@ HFShowerLibrary::VersionInfo HFShowerLibrary::loadEventInfo(TBranch* branch, int
                                  << " numbers";
 
     nMomBin_ = 16;
-    evtPerBin_ = (fileVersion == 0) ? 5000 : 10000;
+    evtPerBin_ = (fileVersion < 2) ? 5000 : 10000;
     totEvents_ = nMomBin_ * evtPerBin_;
     versionInfo.libVers_ = (fileVersion == 0) ? 1.1 : 1.2;
     versionInfo.listVersion_ = 3.6;
