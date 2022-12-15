@@ -33,6 +33,7 @@ namespace {
     params.backProb_ = hfShowerLibrary.getParameter<double>("BackProbability");
     params.verbose_ = hfShowerLibrary.getUntrackedParameter<bool>("Verbosity", false);
     params.applyFidCut_ = hfShowerLibrary.getParameter<bool>("ApplyFiducialCut");
+    params.applyLibFix_ = hfShowerLibrary.getParameter<bool>("ApplyLibFix");
 
     return params;
   }
@@ -114,7 +115,7 @@ HFShowerLibrary::HFShowerLibrary(const Params& iParams, const FileParams& iFileP
   }
 
   auto fileFormat = FileFormat::kOld;
-  const int fileVersion = iFileParams.fileVersion_;
+  fileVersion_ = iFileParams.fileVersion_;
 
   auto newForm = iFileParams.branchEvInfo_.empty();
   TTree* event(nullptr);
@@ -132,7 +133,7 @@ HFShowerLibrary::HFShowerLibrary(const Params& iParams, const FileParams& iFileP
       evtInfo = event->GetBranch(info.c_str());
     }
     if (evtInfo || newForm) {
-      versionInfo = loadEventInfo(evtInfo, fileVersion);
+      versionInfo = loadEventInfo(evtInfo);
     } else {
       edm::LogError("HFShower") << "HFShowerLibrary: HFShowerLibrayEventInfo"
                                 << " Branch does not exist in Event";
@@ -146,7 +147,7 @@ HFShowerLibrary::HFShowerLibrary(const Params& iParams, const FileParams& iFileP
 
   edm::LogVerbatim("HFShower").log([&](auto& logger) {
     logger << "HFShowerLibrary: Library " << versionInfo.libVers_ << " ListVersion " << versionInfo.listVersion_
-           << " File version " << fileVersion << " Events Total " << totEvents_ << " and " << evtPerBin_
+           << " File version " << fileVersion_ << " Events Total " << totEvents_ << " and " << evtPerBin_
            << " per bin\n";
     logger << "HFShowerLibrary: Energies (GeV) with " << nMomBin_ << " bins\n";
     for (int i = 0; i < nMomBin_; ++i) {
@@ -172,7 +173,7 @@ HFShowerLibrary::HFShowerLibrary(const Params& iParams, const FileParams& iFileP
   }
   emBranch_ = BranchReader(emBranch, fileFormat, 0, iFileParams.cacheBranches_ ? totEvents_ : 0);
   size_t offset = 0;
-  if (fileFormat == FileFormat::kNewV3 or (fileFormat == FileFormat::kNew and fileVersion < 2)) {
+  if (fileFormat == FileFormat::kNewV3 or (fileFormat == FileFormat::kNew and fileVersion_ < 2)) {
     //NOTE: for this format, the hadBranch is all empty up to
     // totEvents_ (which is more like 1/2*GenEntries())
     offset = totEvents_;
@@ -541,7 +542,7 @@ HFShowerPhotonCollection HFShowerLibrary::getRecord(int type, int record) const 
   return photo;
 }
 
-HFShowerLibrary::VersionInfo HFShowerLibrary::loadEventInfo(TBranch* branch, int fileVersion) {
+HFShowerLibrary::VersionInfo HFShowerLibrary::loadEventInfo(TBranch* branch) {
   VersionInfo versionInfo;
   if (branch) {
     std::vector<HFShowerLibraryEventInfo> eventInfoCollection;
@@ -561,9 +562,9 @@ HFShowerLibrary::VersionInfo HFShowerLibrary::loadEventInfo(TBranch* branch, int
                                  << " numbers";
 
     nMomBin_ = 16;
-    evtPerBin_ = (fileVersion == 0) ? 5000 : 10000;
+    evtPerBin_ = (fileVersion_ == 0) ? 5000 : 10000;
     totEvents_ = nMomBin_ * evtPerBin_;
-    versionInfo.libVers_ = (fileVersion == 0) ? 1.1 : 1.2;
+    versionInfo.libVers_ = (fileVersion_ == 0) ? 1.1 : 1.2;
     versionInfo.listVersion_ = 3.6;
     pmom_ = {2, 3, 5, 7, 10, 15, 20, 30, 50, 75, 100, 150, 250, 350, 500, 1000};
   }
@@ -590,14 +591,36 @@ HFShowerPhotonCollection HFShowerLibrary::interpolate(int type, double pin) {
     for (int j = 0; j < nMomBin_ - 1; j++) {
       if (pin >= pmom_[j] && pin < pmom_[j + 1]) {
         w = (pin - pmom_[j]) / (pmom_[j + 1] - pmom_[j]);
-        if (j == nMomBin_ - 2) {
-          irc[1] = int(evtPerBin_ * 0.5 * r);
+
+        if (applyLibFix_) {  // specifically for Run2 HFShoverLibrary v4
+          for (int k = 0; k < 2; ++k) {
+            double r = G4UniformRand();
+            int jk = j + k;
+            int ir = jk * evtPerBin_ + 1;
+            if (fileVersion_ >= 2) {
+              ir += int(evtPerBin_ * r);
+            } else {
+              if (jk < 3) {
+                ir += int(evtPerBin_ * r);
+              } else if (jk == 3) {
+                ir += int((evtPerBin_ - SHIFT_PATCH) * r);
+              } else {
+                ir += int(evtPerBin_ * r) - SHIFT_PATCH;
+              }
+            }
+            irc[k] = ir;
+          }
         } else {
-          irc[1] = int(evtPerBin_ * r);
+          if (j == nMomBin_ - 2) {
+            irc[1] = int(evtPerBin_ * 0.5 * r);
+          } else {
+            irc[1] = int(evtPerBin_ * r);
+          }
+          irc[1] += (j + 1) * evtPerBin_ + 1;
+          r = G4UniformRand();
+          irc[0] = int(evtPerBin_ * r) + 1 + j * evtPerBin_;
         }
-        irc[1] += (j + 1) * evtPerBin_ + 1;
-        r = G4UniformRand();
-        irc[0] = int(evtPerBin_ * r) + 1 + j * evtPerBin_;
+
         if (irc[0] < 0) {
           edm::LogWarning("HFShower") << "HFShowerLibrary:: Illegal irc[0] = " << irc[0] << " now set to 0";
           irc[0] = 0;

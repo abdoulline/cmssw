@@ -12,7 +12,8 @@ HFLibraryFileBlock = cms.PSet(
         Verbosity       = cms.untracked.bool(False),
         BranchPost      = cms.untracked.string(''),
         BranchEvt       = cms.untracked.string(''),
-        BranchPre       = cms.untracked.string('')
+        BranchPre       = cms.untracked.string(''),
+        ApplyLibFix     = cms.bool(False)
 )
 
 HFShowerBlock = cms.PSet(

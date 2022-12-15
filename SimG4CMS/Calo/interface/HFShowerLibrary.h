@@ -59,6 +59,7 @@ public:
     bool equalizeTimeShift_;
     bool verbose_;
     bool applyFidCut_;
+    bool applyLibFix_;
   };
   struct FileParams {
     std::string fileName_;
@@ -71,6 +72,8 @@ public:
   HFShowerLibrary(Params const &, FileParams const &, HFFibre::Params);
 
 private:
+  static const int SHIFT_PATCH = 119;  // to fix Run2 HFShoweLibrary v4
+
   HFShowerLibrary(const HcalDDDSimConstants *hcons,
                   const HcalSimulationParameters *hps,
                   edm::ParameterSet const &hfShower,
@@ -82,7 +85,7 @@ private:
     float libVers_;
     float listVersion_;
   };
-  VersionInfo loadEventInfo(TBranch *, int fileVersion);
+  VersionInfo loadEventInfo(TBranch *);
   HFShowerPhotonCollection interpolate(int, double);
   HFShowerPhotonCollection extrapolate(int, double);
   void storePhoton(HFShowerPhoton const &iPhoton, HFShowerPhotonCollection &iPhotons) const;
@@ -136,8 +139,8 @@ private:
   BranchReader emBranch_;
   BranchReader hadBranch_;
 
-  bool verbose_, applyFidCut_;
-  int nMomBin_, totEvents_, evtPerBin_;
+  bool verbose_, applyFidCut_, applyLibFix_;
+  int nMomBin_, totEvents_, evtPerBin_, fileVersion_;
   std::vector<double> pmom_;
 
   bool equalizeTimeShift_;
