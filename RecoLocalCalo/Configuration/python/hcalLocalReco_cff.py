@@ -55,6 +55,7 @@ run2_HECollapse_2018.toReplaceWith(hcalLocalRecoTask, _collapse_hcalLocalRecoTas
 #--- for Run 3 and later
 _run3_hcalLocalRecoTask = _phase1_hcalLocalRecoTask.copy()
 _run3_hcalLocalRecoTask.remove(hbheprereco)
+_run3_hcalLocalRecoTask.remove(zdcreco)
 from Configuration.Eras.Modifier_run3_HB_cff import run3_HB
 run3_HB.toReplaceWith(hcalLocalRecoTask, _run3_hcalLocalRecoTask)
 

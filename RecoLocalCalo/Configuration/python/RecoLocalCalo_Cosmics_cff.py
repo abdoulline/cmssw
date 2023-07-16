@@ -78,7 +78,7 @@ hfprereco = _hcalLocalReco_cff.hfprereco.clone(
 from RecoLocalCalo.HcalRecProducers.hbheplan1_cfi import hbheplan1
 
 # redefine hcal sequence
-hcalLocalRecoTask = cms.Task(hbhereco,hfreco,horeco,zdcreco)
+hcalLocalRecoTask = cms.Task(hbhereco,hfreco,horeco)
 hcalLocalRecoSequence = cms.Sequence(hcalLocalRecoTask)
 
 _phase1_hcalLocalRecoTask = hcalLocalRecoTask.copy()
