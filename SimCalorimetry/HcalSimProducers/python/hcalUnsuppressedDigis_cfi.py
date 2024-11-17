@@ -66,6 +66,10 @@ from Configuration.Eras.Modifier_run2_HCAL_2017_cff import run2_HCAL_2017
 from Configuration.Eras.Modifier_phase2_hgcal_cff import phase2_hgcal
 phase2_hgcal.toModify(hcalSimBlock, killHE = cms.bool(True) )
 
-# remove HE processing for phase 2, completely put in HGCal land
+# remove ZDC processing (optionally)
 from Configuration.Eras.Modifier_zdcNoDigi_cff import zdcNoDigi
+zdcNoDigi.toModify(hcalSimBlock, doZDCDigi = cms.bool(False) )
+
+# remove ZDC processing from Phase2 anyaway
+from Configuration.Eras.Modifier_phase2_hcal_cff import phase2_hcal
 zdcNoDigi.toModify(hcalSimBlock, doZDCDigi = cms.bool(False) )
